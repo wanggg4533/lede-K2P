@@ -1,37 +1,48 @@
-name: Build OpenWrt Firmware
+name: Build OpenWrt for K2P A2
+
 on:
-workflow_dispatch:
+  workflow_dispatch:
+
 jobs:
-build:
-runs-on: ubuntu-22.04
-steps:
-- name: Checkout Source
-uses: actions/checkout@v3
-  - name: Install Dependencies
-    run: |
-      sudo apt update
-      sudo apt install -y build-essential clang flex bison g++ gawk gcc-multilib gettext git libncurses-dev libssl-dev python3-distutils rsync unzip zlib1g-dev file wget
+  build:
+    runs-on: ubuntu-22.04
 
-  - name: Clone LEDE Source
-    run: |
-      git clone https://github.com/coolsnowwolf/lede.git lede
-      cd lede
-      ./scripts/feeds update -a
-      ./scripts/feeds install -a
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v3
 
-  - name: Copy Custom Config
-    run: |
-      cp .config lede/.config
+    - name: Set up cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/work/OpenWrt/build_dir
+          ~/work/OpenWrt/staging_dir
+        key: ${{ runner.os }}-openwrt-${{ hashFiles('**/.config') }}
+        restore-keys: |
+          ${{ runner.os }}-openwrt-
 
-  - name: Build Firmware
-    run: |
-      cd lede
-      make defconfig
-      make -j$(nproc)
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential ccache ecj fastjar file g++ \
+          gawk gettext git java-propose-classpath libelf-dev libncurses5-dev \
+          libncursesw5-dev libssl-dev python3 unzip wget zlib1g-dev python3-distutils
 
-  - name: Upload Firmware
-    uses: actions/upload-artifact@v3
-    with:
-      name: OpenWrt-firmware
-      path: lede/bin/targets/
+    - name: Load custom .config
+      run: |
+        cp .config build/.config || true
 
+    - name: Make download
+      run: |
+        make defconfig
+        make download -j8
+
+    - name: Compile firmware
+      run: |
+        make -j$(nproc) || make -j1 V=s
+
+    - name: Upload firmware
+      uses: actions/upload-artifact@v3
+      with:
+        name: OpenWrt-K2P-Firmware
+        path: bin/targets/
