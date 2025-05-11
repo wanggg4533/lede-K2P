@@ -42,7 +42,7 @@ jobs:
         make -j$(nproc) || make -j1 V=s
 
     - name: Upload firmware
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v2
       with:
         name: OpenWrt-K2P-Firmware
         path: bin/targets/
