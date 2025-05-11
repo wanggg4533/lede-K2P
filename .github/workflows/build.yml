@@ -25,8 +25,7 @@ jobs:
 
       - name: Load custom config
         run: |
-          cp .config build/.config || true
-          [ -f ".config" ] && echo "Using custom config"
+          [ -f ".config" ] && cp .config .config
 
       - name: Download package sources
         run: |
@@ -38,7 +37,7 @@ jobs:
           make -j$(nproc) || make -j1 V=s
 
       - name: Upload firmware
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: OpenWrt-K2P-A2
           path: bin/targets/
